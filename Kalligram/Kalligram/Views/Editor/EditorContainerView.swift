@@ -100,6 +100,12 @@ struct EditorContainerView: View {
             guard oldValue.documentID == newValue.documentID else { return }
             applyDocumentFormatting(document)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .documentRestored)) { notification in
+            guard let restoredID = notification.object as? UUID,
+                  restoredID == document.id else { return }
+            editorVM.reloadContent()
+            applyDocumentFormatting(document)
+        }
     }
 
     private var shouldShowEditorToolbar: Bool {

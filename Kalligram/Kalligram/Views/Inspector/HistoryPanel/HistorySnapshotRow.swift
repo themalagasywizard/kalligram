@@ -6,22 +6,15 @@ struct HistorySnapshotRow: View {
     let iconName: String
     let onSelect: () -> Void
     let onRestore: () -> Void
+    let onBranch: () -> Void
 
     @State private var isHovered = false
 
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: Spacing.sm) {
-                // Timeline indicator
-                VStack(spacing: 0) {
-                    Circle()
-                        .fill(isSelected ? ColorPalette.accentBlue : ColorPalette.borderSubtle)
-                        .frame(width: 8, height: 8)
-                    Rectangle()
-                        .fill(ColorPalette.borderSubtle)
-                        .frame(width: 1)
-                }
-                .frame(width: 8)
+                // Preview thumbnail
+                SnapshotThumbnail(path: version.previewImagePath)
 
                 // Content
                 VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -43,6 +36,19 @@ struct HistorySnapshotRow: View {
                         Text("\(version.wordCount) words")
                             .font(Typography.caption2)
                             .foregroundStyle(ColorPalette.textTertiary)
+                        Text("\(max(1, version.pageCount)) pages")
+                            .font(Typography.caption2)
+                            .foregroundStyle(ColorPalette.textTertiary)
+                    }
+
+                    if !version.branchName.isEmpty && version.branchName != "Main" {
+                        Text(version.branchName)
+                            .font(Typography.caption2)
+                            .foregroundStyle(ColorPalette.accentBlue)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(ColorPalette.accentBlue.opacity(0.12))
+                            .clipShape(Capsule())
                     }
                 }
 
@@ -50,16 +56,29 @@ struct HistorySnapshotRow: View {
 
                 // Restore button (visible on hover)
                 if isHovered {
-                    Button(action: onRestore) {
-                        Text("Restore")
-                            .font(Typography.caption2)
-                            .foregroundStyle(ColorPalette.accentBlue)
-                            .padding(.horizontal, Spacing.sm)
-                            .padding(.vertical, 2)
-                            .background(ColorPalette.accentBlue.opacity(0.1))
-                            .clipShape(Capsule())
+                    HStack(spacing: Spacing.xs) {
+                        Button(action: onBranch) {
+                            Text("Branch")
+                                .font(Typography.caption2)
+                                .foregroundStyle(ColorPalette.textPrimary)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, 2)
+                                .background(ColorPalette.surfaceTertiary)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+
+                        Button(action: onRestore) {
+                            Text("Restore")
+                                .font(Typography.caption2)
+                                .foregroundStyle(ColorPalette.accentBlue)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, 2)
+                                .background(ColorPalette.accentBlue.opacity(0.1))
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                     .transition(.opacity)
                 }
             }
@@ -76,5 +95,34 @@ struct HistorySnapshotRow: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+private struct SnapshotThumbnail: View {
+    let path: String?
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(ColorPalette.surfaceTertiary)
+                .frame(width: 44, height: 62)
+
+            if let image = VersionPreviewService.previewImage(from: path) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 44, height: 62)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+            } else {
+                Image(systemName: "doc.text")
+                    .font(.system(size: 14))
+                    .foregroundStyle(ColorPalette.textTertiary)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .strokeBorder(ColorPalette.borderSubtle, lineWidth: 1)
+        )
     }
 }

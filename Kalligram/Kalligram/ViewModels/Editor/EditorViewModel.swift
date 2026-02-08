@@ -96,6 +96,25 @@ final class EditorViewModel {
         isDirty = false
     }
 
+    func reloadContent() {
+        guard let document, let textView else { return }
+
+        if let rtfData = document.contentRTFData,
+           let attrString = NSAttributedString.fromRTFData(rtfData) {
+            textView.textStorage?.setAttributedString(attrString)
+        } else {
+            textView.string = document.contentPlainText
+        }
+
+        let cursorPos = min(document.lastCursorPosition, textView.string.count)
+        textView.setSelectedRange(NSRange(location: cursorPos, length: 0))
+
+        if let textStorage = textView.textStorage {
+            updateCounts(from: textStorage)
+        }
+        isDirty = false
+    }
+
     // MARK: - Formatting Commands
 
     func toggleBold() {

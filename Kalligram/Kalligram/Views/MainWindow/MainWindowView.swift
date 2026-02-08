@@ -36,7 +36,10 @@ struct MainWindowView: View {
                 citationVM: citationVM,
                 commentsVM: commentsVM,
                 historyVM: historyVM,
-                document: appViewModel.selectedDocument
+                document: appViewModel.selectedDocument,
+                onBranchCreated: { newDoc in
+                    appViewModel.openDocument(newDoc, in: appState)
+                }
             )
             .navigationSplitViewColumnWidth(
                 min: Spacing.inspectorMinWidth,

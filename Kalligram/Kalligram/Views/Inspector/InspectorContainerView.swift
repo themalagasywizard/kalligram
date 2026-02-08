@@ -19,6 +19,7 @@ struct InspectorContainerView: View {
     var onInsertText: ((String) -> Void)?
     var onJumpToRange: ((NSRange) -> Void)?
     var onRestore: (() -> Void)?
+    var onBranchCreated: ((Document) -> Void)?
 
     var body: some View {
         @Bindable var state = appState
@@ -129,6 +130,9 @@ struct InspectorContainerView: View {
                             document: document,
                             onRestore: {
                                 onRestore?()
+                            },
+                            onBranchCreated: { newDoc in
+                                onBranchCreated?(newDoc)
                             }
                         )
                     } else {
