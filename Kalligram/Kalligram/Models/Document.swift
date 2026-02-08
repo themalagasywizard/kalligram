@@ -16,7 +16,15 @@ final class Document {
     var marginLeft: Double
     var marginRight: Double
     var lineSpacing: Double
+    var paragraphSpacingBefore: Double = 0
     var paragraphSpacing: Double
+    var firstLineIndent: Double = 0
+    var bodyFontName: String = "Georgia"
+    var bodyFontSize: Double = 16
+    var bodyAlignment: String = ParagraphAlignment.left.rawValue
+    var hyphenationEnabled: Bool = false
+    var includePageNumbers: Bool = true
+    var includeTableOfContents: Bool = false
     var isPinned: Bool
     var isFavorite: Bool
     var lastCursorPosition: Int
@@ -63,7 +71,15 @@ final class Document {
         self.marginLeft = 72
         self.marginRight = 72
         self.lineSpacing = 1.5
+        self.paragraphSpacingBefore = 0
         self.paragraphSpacing = 12
+        self.firstLineIndent = 0
+        self.bodyFontName = "Georgia"
+        self.bodyFontSize = 16
+        self.bodyAlignment = ParagraphAlignment.left.rawValue
+        self.hyphenationEnabled = false
+        self.includePageNumbers = true
+        self.includeTableOfContents = false
         self.isPinned = false
         self.isFavorite = false
         self.lastCursorPosition = 0
@@ -91,6 +107,11 @@ final class Document {
     var paperSizeEnum: PaperSize {
         get { PaperSize(rawValue: paperSize) ?? .letter }
         set { paperSize = newValue.rawValue }
+    }
+
+    var bodyAlignmentEnum: ParagraphAlignment {
+        get { ParagraphAlignment(rawValue: bodyAlignment) ?? .left }
+        set { bodyAlignment = newValue.rawValue }
     }
 
     var isImported: Bool { sourceFilePath != nil }

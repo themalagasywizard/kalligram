@@ -7,6 +7,7 @@ struct PageView: View {
     let margins: NSEdgeInsets
     let bleed: CGFloat
     let showsGuides: Bool
+    let showsPageNumbers: Bool
 
     var body: some View {
         PageContainer(
@@ -17,7 +18,8 @@ struct PageView: View {
             content: nil,
             margins: margins,
             bleed: bleed,
-            showsGuides: showsGuides
+            showsGuides: showsGuides,
+            showsPageNumbers: showsPageNumbers
         )
     }
 }
@@ -31,6 +33,7 @@ struct PageContainer: View {
     let margins: NSEdgeInsets
     let bleed: CGFloat
     let showsGuides: Bool
+    let showsPageNumbers: Bool
 
     var body: some View {
         ZStack {
@@ -72,13 +75,14 @@ struct PageContainer: View {
                     .padding(.trailing, margins.right)
                 }
 
-                // Page number footer
-                VStack {
-                    Spacer()
-                    Text("\(pageNumber)")
-                        .font(Typography.caption2)
-                        .foregroundStyle(ColorPalette.textTertiary)
-                        .padding(.bottom, max(8, margins.bottom / 2))
+                if showsPageNumbers {
+                    VStack {
+                        Spacer()
+                        Text("\(pageNumber)")
+                            .font(Typography.caption2)
+                            .foregroundStyle(ColorPalette.textTertiary)
+                            .padding(.bottom, max(8, margins.bottom / 2))
+                    }
                 }
             }
             .frame(

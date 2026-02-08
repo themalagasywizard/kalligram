@@ -3,7 +3,7 @@ import AppKit
 
 struct ExportSheet: View {
     @Environment(\.dismiss) private var dismiss
-    let document: Document
+    @Bindable var document: Document
     let attributedString: NSAttributedString?
 
     @State private var exportVM = ExportViewModel()
@@ -138,7 +138,7 @@ struct ExportSheet: View {
 
                 KButton("Export", icon: SFSymbolTokens.export, style: .primary) {
                     Task {
-                        guard let attrString = attributedString else { return }
+                        guard let attrString = formattedAttributedString() else { return }
                         let metadata = buildMetadata()
                         if let data = await exportVM.export(attributedString: attrString, metadata: metadata) {
                             exportVM.saveToFile(data: data)
@@ -152,12 +152,20 @@ struct ExportSheet: View {
         .frame(width: 700, height: 520)
         .onAppear {
             exportVM.filename = document.title
+            exportVM.includePageNumbers = document.includePageNumbers
+            exportVM.includeTableOfContents = document.includeTableOfContents
             updatePreview()
+        }
+        .onChange(of: exportVM.includePageNumbers) { _, newValue in
+            document.includePageNumbers = newValue
+        }
+        .onChange(of: exportVM.includeTableOfContents) { _, newValue in
+            document.includeTableOfContents = newValue
         }
     }
 
     private func updatePreview() {
-        guard let attrString = attributedString else { return }
+        guard let attrString = formattedAttributedString() else { return }
         exportVM.updatePreview(attributedString: attrString, metadata: buildMetadata())
     }
 
@@ -176,5 +184,10 @@ struct ExportSheet: View {
             includePageNumbers: exportVM.includePageNumbers,
             includeTableOfContents: exportVM.includeTableOfContents
         )
+    }
+
+    private func formattedAttributedString() -> NSAttributedString? {
+        guard let attrString = attributedString else { return nil }
+        return DocumentFormattingService.applyingBodyStyle(to: attrString, document: document)
     }
 }

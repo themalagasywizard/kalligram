@@ -230,30 +230,13 @@ struct AIPanelView: View {
     }
 
     private func modelOptions(for settings: UserSettings) -> [String] {
-        var options: [String] = []
-
-        func add(_ model: String) {
-            guard !options.contains(model) else { return }
-            options.append(model)
+        var options = selectedModels(from: settings)
+        if options.isEmpty {
+            options = AIModelCatalog.allModels
         }
-
-        add(settings.preferredModel)
-
-        switch settings.preferredAIProvider {
-        case "openai":
-            add("gpt-4o")
-            add("gpt-4o-mini")
-            add("gpt-4.1")
-        case "claude":
-            add("claude-sonnet-4-5-20250929")
-            add("claude-3-5-sonnet-latest")
-            add("claude-3-haiku-20240307")
-        default:
-            add("anthropic/claude-sonnet-4")
-            add("openai/gpt-4o")
-            add("google/gemini-1.5-pro")
+        if !options.contains(settings.preferredModel) {
+            options.insert(settings.preferredModel, at: 0)
         }
-
         return options
     }
 
@@ -262,6 +245,13 @@ struct AIPanelView: View {
             return String(last)
         }
         return model
+    }
+
+    private func selectedModels(from settings: UserSettings) -> [String] {
+        settings.modelPickerModels
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
 }
 

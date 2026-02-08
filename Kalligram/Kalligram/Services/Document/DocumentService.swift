@@ -37,7 +37,15 @@ final class DocumentService {
         copy.marginLeft = document.marginLeft
         copy.marginRight = document.marginRight
         copy.lineSpacing = document.lineSpacing
+        copy.paragraphSpacingBefore = document.paragraphSpacingBefore
         copy.paragraphSpacing = document.paragraphSpacing
+        copy.firstLineIndent = document.firstLineIndent
+        copy.bodyFontName = document.bodyFontName
+        copy.bodyFontSize = document.bodyFontSize
+        copy.bodyAlignment = document.bodyAlignment
+        copy.hyphenationEnabled = document.hyphenationEnabled
+        copy.includePageNumbers = document.includePageNumbers
+        copy.includeTableOfContents = document.includeTableOfContents
         copy.paperSize = document.paperSize
         modelContext.insert(copy)
         return copy

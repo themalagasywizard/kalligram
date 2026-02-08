@@ -44,6 +44,7 @@ final class AppState {
 
     enum InspectorTab: String, CaseIterable {
         case outline
+        case format
         case ai
         case research
         case comments
@@ -52,6 +53,7 @@ final class AppState {
         var iconName: String {
             switch self {
             case .outline: SFSymbolTokens.outline
+            case .format: SFSymbolTokens.format
             case .ai: SFSymbolTokens.ai
             case .research: SFSymbolTokens.research
             case .comments: SFSymbolTokens.comments
@@ -62,6 +64,7 @@ final class AppState {
         var label: String {
             switch self {
             case .outline: "Outline"
+            case .format: "Format"
             case .ai: "AI"
             case .research: "Research"
             case .comments: "Comments"

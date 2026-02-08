@@ -10,15 +10,16 @@ struct ResearchResultCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // Title
-            Text(source.title)
+            Text(displayTitle.softWrappedForUI)
                 .font(Typography.bodySmall)
                 .fontWeight(.medium)
                 .foregroundStyle(ColorPalette.textPrimary)
                 .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
 
             // Authors
-            if !source.authors.isEmpty {
-                Text(source.authors)
+            if !displayAuthors.isEmpty {
+                Text(displayAuthors.softWrappedForUI)
                     .font(Typography.caption1)
                     .foregroundStyle(ColorPalette.textSecondary)
                     .lineLimit(1)
@@ -26,10 +27,19 @@ struct ResearchResultCard: View {
 
             // Abstract
             if let abstract = source.abstract, !abstract.isEmpty {
-                Text(abstract)
+                Text(abstract.softWrappedForUI)
                     .font(Typography.caption1)
                     .foregroundStyle(ColorPalette.textTertiary)
                     .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let url = displayURL {
+                Text(url.softWrappedForUI)
+                    .font(Typography.caption2)
+                    .foregroundStyle(ColorPalette.textTertiary)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
             }
 
             HStack {
@@ -61,6 +71,7 @@ struct ResearchResultCard: View {
             }
         }
         .padding(Spacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: Spacing.radiusMedium)
                 .fill(ColorPalette.surfacePrimary)
@@ -77,6 +88,38 @@ struct ResearchResultCard: View {
                 isHovered = hovering
             }
         }
+    }
+
+    private var displayTitle: String {
+        if source.title.contains(" | ") {
+            return source.title.components(separatedBy: " | ").first ?? source.title
+        }
+        return source.title
+    }
+
+    private var displayAuthors: String {
+        if !source.authors.isEmpty {
+            return source.authors
+        }
+        let parts = source.title.components(separatedBy: " | ")
+        if parts.count > 1 {
+            return parts[1]
+        }
+        return ""
+    }
+
+    private var displayURL: String? {
+        if let url = source.url, !url.isEmpty {
+            return url
+        }
+        if let match = source.title.firstMatch(of: urlRegex) {
+            return String(source.title[match.range])
+        }
+        return nil
+    }
+
+    private var urlRegex: Regex<Substring> {
+        /https?:\/\/[^\s|]+/
     }
 }
 

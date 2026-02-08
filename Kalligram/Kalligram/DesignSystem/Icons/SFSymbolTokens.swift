@@ -50,7 +50,8 @@ enum SFSymbolTokens {
     static let ai = "sparkles"
     static let research = "magnifyingglass"
     static let comments = "bubble.left"
-    static let history = "clock.arrow.counterclockwise"
+    static let history = "arrow.triangle.branch"
+    static let format = "textformat"
 
     // MARK: - AI Actions
     static let rewrite = "arrow.triangle.2.circlepath"

@@ -9,6 +9,7 @@ struct EditorContainerView: View {
     @State private var autosaveService = AutosaveService()
     @State private var paginationVM = PaginationViewModel()
     @Query private var settingsQuery: [UserSettings]
+    @State private var editorAreaOriginY: CGFloat = 0
 
     private var settings: UserSettings { settingsQuery.first ?? UserSettings() }
 
@@ -74,6 +75,7 @@ struct EditorContainerView: View {
     @ViewBuilder
     private func editorContent(for document: Document) -> some View {
         let viewMode = document.viewModeEnum
+        let formattingSnapshot = DocumentFormattingSnapshot(document: document)
 
         VStack(spacing: 0) {
             if shouldShowEditorToolbar {
@@ -93,6 +95,10 @@ struct EditorContainerView: View {
             case .paginated:
                 paginatedView(for: document)
             }
+        }
+        .onChange(of: formattingSnapshot) { oldValue, newValue in
+            guard oldValue.documentID == newValue.documentID else { return }
+            applyDocumentFormatting(document)
         }
     }
 
@@ -151,6 +157,7 @@ struct EditorContainerView: View {
             floatingToolbarOverlay()
             wordCountOverlay(for: document)
         }
+        .background(editorAreaTracker)
     }
 
     // MARK: - Reader Mode
@@ -175,8 +182,10 @@ struct EditorContainerView: View {
             }
             .background(ColorPalette.readerSepia.opacity(0.15))
 
+            floatingToolbarOverlay()
             wordCountOverlay(for: document)
         }
+        .background(editorAreaTracker)
     }
 
     // MARK: - Paginated Mode
@@ -199,6 +208,7 @@ struct EditorContainerView: View {
                 currentPage: paginationVM.currentPage
             ) { page in
                 paginationVM.currentPage = page
+                paginationVM.scrollToPage = page
             }
 
             KDivider(orientation: .vertical)
@@ -220,6 +230,7 @@ struct EditorContainerView: View {
                 floatingToolbarOverlay()
                 wordCountOverlay(for: document)
             }
+            .background(editorAreaTracker)
         }
     }
 
@@ -229,16 +240,26 @@ struct EditorContainerView: View {
     private func floatingToolbarOverlay() -> some View {
         if editorVM.hasSelection {
             FloatingToolbar(
-                editorVM: editorVM,
-                formattingVM: formattingVM,
                 isVisible: editorVM.hasSelection,
-                position: CGPoint(
-                    x: editorVM.selectionRect.midX,
-                    y: editorVM.selectionRect.minY - 8
-                )
+                isRewriting: editorVM.isRewriting,
+                onRewrite: {
+                    editorVM.requestInlineRewrite(using: settings)
+                }
             )
-            .padding(.top, max(editorVM.selectionRect.minY - 48, 8))
+            .padding(.top, max(editorVM.selectionRect.minY - editorAreaOriginY - 48, 8))
             .animation(AnimationTokens.snappy, value: editorVM.hasSelection)
+        }
+    }
+
+    private var editorAreaTracker: some View {
+        GeometryReader { geo in
+            Color.clear
+                .onAppear {
+                    editorAreaOriginY = geo.frame(in: .global).origin.y
+                }
+                .onChange(of: geo.frame(in: .global).origin.y) { _, newY in
+                    editorAreaOriginY = newY
+                }
         }
     }
 
@@ -253,5 +274,92 @@ struct EditorContainerView: View {
             )
             .padding(.bottom, Spacing.sm)
         }
+    }
+
+    private func applyDocumentFormatting(_ document: Document) {
+        guard let textView = editorVM.textView,
+              let textStorage = textView.textStorage else { return }
+        DocumentFormattingService.applyBodyStyle(to: textStorage, document: document)
+        DocumentFormattingService.configureTextViewDefaults(textView, document: document)
+        editorVM.markDirty()
+        editorVM.saveContent(from: textView)
+    }
+}
+
+private struct DocumentFormattingSnapshot: Equatable {
+    let documentID: UUID
+    let bodyFontName: String
+    let bodyFontSize: Double
+    let lineSpacing: Double
+    let paragraphSpacingBefore: Double
+    let paragraphSpacing: Double
+    let firstLineIndent: Double
+    let bodyAlignment: String
+    let hyphenationEnabled: Bool
+
+    init(document: Document) {
+        documentID = document.id
+        bodyFontName = document.bodyFontName
+        bodyFontSize = document.bodyFontSize
+        lineSpacing = document.lineSpacing
+        paragraphSpacingBefore = document.paragraphSpacingBefore
+        paragraphSpacing = document.paragraphSpacing
+        firstLineIndent = document.firstLineIndent
+        bodyAlignment = document.bodyAlignment
+        hyphenationEnabled = document.hyphenationEnabled
+    }
+}
+
+// MARK: - Rewrite Toggle Bar
+
+struct RewriteToggleBar: View {
+    let isShowingRewritten: Bool
+    let onToggle: () -> Void
+    let onAccept: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: Spacing.sm) {
+            // Toggle between versions
+            Button(action: onToggle) {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "arrow.left.arrow.right")
+                        .font(.system(size: 11, weight: .medium))
+                    Text(isShowingRewritten ? "Rewritten" : "Original")
+                        .font(Typography.caption1)
+                }
+                .foregroundStyle(isShowingRewritten ? Color.green : ColorPalette.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .help("Toggle between original and rewritten text")
+
+            KDivider()
+                .frame(height: 16)
+
+            // Accept
+            Button(action: onAccept) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Color.green)
+                    .frame(width: 22, height: 22)
+            }
+            .buttonStyle(.plain)
+            .help("Accept rewrite")
+
+            // Dismiss / Revert
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(ColorPalette.textTertiary)
+                    .frame(width: 22, height: 22)
+            }
+            .buttonStyle(.plain)
+            .help("Revert to original")
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.xs)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: Spacing.radiusMedium))
+        .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
     }
 }

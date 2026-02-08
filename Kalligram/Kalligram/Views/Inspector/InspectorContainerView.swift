@@ -53,15 +53,14 @@ struct InspectorContainerView: View {
                                     .frame(height: 2)
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .frame(maxHeight: .infinity)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help(tab.label)
                 }
             }
-            .padding(.horizontal, Spacing.sm)
+            .frame(maxWidth: .infinity)
             .frame(height: Spacing.editorToolbarHeight)
             .background(ColorPalette.surfaceSecondary)
             .overlay(alignment: .top) { KDivider() }
@@ -80,6 +79,12 @@ struct InspectorContainerView: View {
                         )
                     } else {
                         InspectorPlaceholder(tab: "Outline", icon: SFSymbolTokens.outline)
+                    }
+                case .format:
+                    if let document {
+                        FormatPanelView(document: document)
+                    } else {
+                        InspectorPlaceholder(tab: "Format", icon: SFSymbolTokens.format)
                     }
                 case .ai:
                     if let aiRewriteVM {

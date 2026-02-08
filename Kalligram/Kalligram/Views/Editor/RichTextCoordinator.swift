@@ -19,6 +19,17 @@ class RichTextCoordinator: NSObject, NSTextViewDelegate {
         guard let textView = notification.object as? NSTextView,
               let textStorage = textView.textStorage else { return }
 
+        // If a programmatic rewrite edit triggered this, skip clearing state / debounced save
+        if editorVM.isProgrammaticRewriteEdit {
+            editorVM.updateCounts(from: textStorage)
+            return
+        }
+
+        // User typed manually — invalidate any pending rewrite
+        if editorVM.inlineRewrite != nil {
+            editorVM.inlineRewrite = nil
+        }
+
         editorVM.updateCounts(from: textStorage)
         editorVM.markDirty()
 
@@ -47,9 +58,10 @@ class RichTextCoordinator: NSObject, NSTextViewDelegate {
             rect.origin.x += textView.textContainerInset.width
             rect.origin.y += textView.textContainerInset.height
 
-            // Convert to window coordinates for floating toolbar
-            let windowRect = textView.convert(rect, to: nil)
-            editorVM.updateSelection(hasSelection: true, rect: windowRect)
+            // Convert to the window's content view (flipped, matching SwiftUI .global coords)
+            let targetView = textView.window?.contentView
+            let convertedRect = textView.convert(rect, to: targetView)
+            editorVM.updateSelection(hasSelection: true, rect: convertedRect)
         } else {
             editorVM.updateSelection(hasSelection: false, rect: .zero)
         }

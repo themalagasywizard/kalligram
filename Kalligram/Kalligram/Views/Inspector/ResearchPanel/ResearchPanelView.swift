@@ -11,147 +11,155 @@ struct ResearchPanelView: View {
     private var settings: UserSettings { settingsQuery.first ?? UserSettings() }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.lg) {
-                // Header
-                HStack {
-                    Image(systemName: SFSymbolTokens.research)
-                        .foregroundStyle(ColorPalette.accentBlue)
-                    Text("Research")
-                        .font(Typography.headline)
-                        .foregroundStyle(ColorPalette.textPrimary)
-                }
-
-                // Search
-                ResearchQueryView(
-                    query: Bindable(researchVM).query,
-                    isLoading: researchVM.isLoading
-                ) {
-                    Task {
-                        await researchVM.search(
-                            using: settings,
-                            documentContext: document?.contentPlainText.truncated(to: 500)
-                        )
-                    }
-                }
-
-                // Error
-                if let error = researchVM.error {
-                    Text(error)
-                        .font(Typography.caption1)
-                        .foregroundStyle(.red)
-                }
-
-                // Results
-                if let result = researchVM.result {
-                    // Summary
-                    VStack(alignment: .leading, spacing: Spacing.sm) {
-                        Text("Summary")
-                            .font(Typography.caption1)
-                            .fontWeight(.medium)
-                            .foregroundStyle(ColorPalette.textSecondary)
-
-                        Text(result.summary)
-                            .font(Typography.bodySmall)
+        GeometryReader { geo in
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.lg) {
+                    // Header
+                    HStack {
+                        Image(systemName: SFSymbolTokens.research)
+                            .foregroundStyle(ColorPalette.accentBlue)
+                        Text("Research")
+                            .font(Typography.headline)
                             .foregroundStyle(ColorPalette.textPrimary)
-                            .padding(Spacing.sm)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(ColorPalette.surfaceTertiary)
-                            .clipShape(RoundedRectangle(cornerRadius: Spacing.radiusSmall))
                     }
 
-                    // Sources
-                    if !result.sources.isEmpty {
-                        VStack(alignment: .leading, spacing: Spacing.sm) {
-                            HStack {
-                                Text("Sources")
-                                    .font(Typography.caption1)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(ColorPalette.textSecondary)
-                                Spacer()
-                                // Citation style picker
-                                Picker("", selection: Bindable(citationVM).citationStyle) {
-                                    ForEach(CitationStyle.allCases, id: \.self) { style in
-                                        Text(style.displayName).tag(style)
-                                    }
-                                }
-                                .fixedSize()
-                                .labelsHidden()
-                            }
-
-                            ForEach(result.sources) { source in
-                                ResearchResultCard(
-                                    source: source,
-                                    citationStyle: citationVM.citationStyle,
-                                    onInsert: {
-                                        let formatted = CitationService.format(source: source, style: citationVM.citationStyle)
-                                        onInsertCitation(formatted)
-                                        if document != nil {
-                                            // Also save citation to document
-                                        }
-                                    }
-                                )
-                            }
+                    // Search
+                    ResearchQueryView(
+                        query: Bindable(researchVM).query,
+                        isLoading: researchVM.isLoading
+                    ) {
+                        Task {
+                            await researchVM.search(
+                                using: settings,
+                                documentContext: document?.contentPlainText.truncated(to: 500)
+                            )
                         }
                     }
 
-                    // Related queries
-                    if !result.relatedQueries.isEmpty {
+                    // Error
+                    if let error = researchVM.error {
+                        Text(error)
+                            .font(Typography.caption1)
+                            .foregroundStyle(.red)
+                    }
+
+                    // Results
+                    if let result = researchVM.result {
+                        // Summary
                         VStack(alignment: .leading, spacing: Spacing.sm) {
-                            Text("Related Questions")
+                            Text("Summary")
                                 .font(Typography.caption1)
                                 .fontWeight(.medium)
                                 .foregroundStyle(ColorPalette.textSecondary)
 
-                            FlowLayout(spacing: Spacing.xs) {
-                                ForEach(result.relatedQueries, id: \.self) { query in
-                                    Button {
-                                        researchVM.query = query
-                                        Task {
-                                            await researchVM.search(using: settings)
-                                        }
-                                    } label: {
-                                        Text(query)
-                                            .font(Typography.caption1)
-                                            .foregroundStyle(ColorPalette.accentBlue)
-                                            .padding(.horizontal, Spacing.sm)
-                                            .padding(.vertical, Spacing.xs)
-                                            .background(ColorPalette.accentBlue.opacity(0.1))
-                                            .clipShape(Capsule())
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
+                            Text(result.summary.softWrappedForUI)
+                                .font(Typography.bodySmall)
+                                .foregroundStyle(ColorPalette.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(Spacing.sm)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(ColorPalette.surfaceTertiary)
+                                .clipShape(RoundedRectangle(cornerRadius: Spacing.radiusSmall))
                         }
-                    }
-                }
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Recent searches
-                if researchVM.result == nil && !researchVM.searchHistory.isEmpty {
-                    VStack(alignment: .leading, spacing: Spacing.sm) {
-                        Text("Recent Searches")
-                            .font(Typography.caption1)
-                            .foregroundStyle(ColorPalette.textTertiary)
-
-                        ForEach(researchVM.searchHistory, id: \.self) { query in
-                            Button {
-                                researchVM.query = query
-                            } label: {
+                        // Sources
+                        if !result.sources.isEmpty {
+                            VStack(alignment: .leading, spacing: Spacing.sm) {
                                 HStack {
-                                    Image(systemName: SFSymbolTokens.recent)
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(ColorPalette.textTertiary)
-                                    Text(query)
-                                        .font(Typography.bodySmall)
+                                    Text("Sources")
+                                        .font(Typography.caption1)
+                                        .fontWeight(.medium)
                                         .foregroundStyle(ColorPalette.textSecondary)
+                                    Spacer()
+                                    // Citation style picker
+                                    Picker("", selection: Bindable(citationVM).citationStyle) {
+                                        ForEach(CitationStyle.allCases, id: \.self) { style in
+                                            Text(style.displayName).tag(style)
+                                        }
+                                    }
+                                    .fixedSize()
+                                    .labelsHidden()
+                                }
+
+                                ForEach(result.sources) { source in
+                                    ResearchResultCard(
+                                        source: source,
+                                        citationStyle: citationVM.citationStyle,
+                                        onInsert: {
+                                            let formatted = CitationService.format(source: source, style: citationVM.citationStyle)
+                                            onInsertCitation(formatted)
+                                            if document != nil {
+                                                // Also save citation to document
+                                            }
+                                        }
+                                    )
                                 }
                             }
-                            .buttonStyle(.plain)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // Related queries
+                        if !result.relatedQueries.isEmpty {
+                            VStack(alignment: .leading, spacing: Spacing.sm) {
+                                Text("Related Questions")
+                                    .font(Typography.caption1)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(ColorPalette.textSecondary)
+
+                                FlowLayout(spacing: Spacing.xs) {
+                                    ForEach(result.relatedQueries, id: \.self) { query in
+                                        Button {
+                                            researchVM.query = query
+                                            Task {
+                                                await researchVM.search(using: settings)
+                                            }
+                                        } label: {
+                                            Text(query.softWrappedForUI)
+                                                .font(Typography.caption1)
+                                                .foregroundStyle(ColorPalette.accentBlue)
+                                                .padding(.horizontal, Spacing.sm)
+                                                .padding(.vertical, Spacing.xs)
+                                                .background(ColorPalette.accentBlue.opacity(0.1))
+                                                .clipShape(Capsule())
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
+
+                    // Recent searches
+                    if researchVM.result == nil && !researchVM.searchHistory.isEmpty {
+                        VStack(alignment: .leading, spacing: Spacing.sm) {
+                            Text("Recent Searches")
+                                .font(Typography.caption1)
+                                .foregroundStyle(ColorPalette.textTertiary)
+
+                            ForEach(researchVM.searchHistory, id: \.self) { query in
+                                Button {
+                                    researchVM.query = query
+                                } label: {
+                                    HStack {
+                                        Image(systemName: SFSymbolTokens.recent)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(ColorPalette.textTertiary)
+                                        Text(query.softWrappedForUI)
+                                            .font(Typography.bodySmall)
+                                            .foregroundStyle(ColorPalette.textSecondary)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
+                .padding(Spacing.lg)
+                .frame(width: max(0, geo.size.width - Spacing.lg * 2), alignment: .leading)
             }
-            .padding(Spacing.lg)
         }
     }
 }

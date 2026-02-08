@@ -121,7 +121,10 @@ struct FileCommands: Commands {
 
     private func exportSelectedDocument(format: ExportFormat) {
         guard let document = appViewModel.selectedDocument else { return }
-        let attributed = attributedString(from: document)
+        let attributed = DocumentFormattingService.applyingBodyStyle(
+            to: attributedString(from: document),
+            document: document
+        )
         let metadata = ExportMetadata(
             title: document.title,
             author: "Author",
@@ -133,8 +136,8 @@ struct FileCommands: Commands {
                 right: document.marginRight
             ),
             lineSpacing: document.lineSpacing,
-            includePageNumbers: true,
-            includeTableOfContents: false
+            includePageNumbers: document.includePageNumbers,
+            includeTableOfContents: document.includeTableOfContents
         )
 
         let exportVM = ExportViewModel()

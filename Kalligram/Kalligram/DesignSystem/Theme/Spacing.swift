@@ -56,6 +56,6 @@ enum Spacing {
     // MARK: - Inspector
 
     static let inspectorMinWidth: CGFloat = 260
-    static let inspectorIdealWidth: CGFloat = 300
-    static let inspectorMaxWidth: CGFloat = 360
+    static let inspectorIdealWidth: CGFloat = 340
+    static let inspectorMaxWidth: CGFloat = 560
 }

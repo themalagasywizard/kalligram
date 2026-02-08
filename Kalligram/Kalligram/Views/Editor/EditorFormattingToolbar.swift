@@ -24,6 +24,17 @@ struct EditorFormattingToolbar: View {
             alignmentGroup
 
             Spacer()
+
+            if editorVM.inlineRewrite != nil {
+                RewriteToggleBar(
+                    isShowingRewritten: editorVM.inlineRewrite?.isShowingRewritten ?? true,
+                    onToggle: { editorVM.toggleRewriteVersion() },
+                    onAccept: { editorVM.acceptRewrite() },
+                    onDismiss: { editorVM.dismissRewrite() }
+                )
+                .transition(.opacity)
+                .animation(AnimationTokens.snappy, value: editorVM.inlineRewrite != nil)
+            }
         }
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.sm)

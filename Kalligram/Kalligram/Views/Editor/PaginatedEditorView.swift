@@ -33,7 +33,8 @@ struct PaginatedEditorView: View {
                             content: nil,
                             margins: margins,
                             bleed: bleed,
-                            showsGuides: showsGuides
+                            showsGuides: showsGuides,
+                            showsPageNumbers: document.includePageNumbers
                         )
                         .overlay(alignment: .topLeading) {
                             PaginatedPageTextView(
@@ -58,10 +59,12 @@ struct PaginatedEditorView: View {
                 .padding(.vertical, Spacing.canvas)
                 .frame(maxWidth: .infinity)
             }
-            .onChange(of: paginationVM.currentPage) { _, newValue in
+            .onChange(of: paginationVM.scrollToPage) { _, newValue in
+                guard let page = newValue else { return }
                 withAnimation(.easeOut(duration: 0.2)) {
-                    proxy.scrollTo(newValue, anchor: .top)
+                    proxy.scrollTo(page, anchor: .top)
                 }
+                paginationVM.scrollToPage = nil
             }
         }
     }
@@ -163,6 +166,21 @@ final class PaginatedTextCoordinator: NSObject, NSTextViewDelegate {
         guard let textView = notification.object as? NSTextView,
               let textStorage = textView.textStorage else { return }
 
+        // If a programmatic rewrite edit triggered this, skip clearing state / debounced save
+        if editorVM.isProgrammaticRewriteEdit {
+            editorVM.updateCounts(from: textStorage)
+            textSystem?.ensurePages()
+            if let textSystem {
+                paginationVM.pageCount = max(1, textSystem.pageCount)
+            }
+            return
+        }
+
+        // User typed manually — invalidate any pending rewrite
+        if editorVM.inlineRewrite != nil {
+            editorVM.inlineRewrite = nil
+        }
+
         editorVM.updateCounts(from: textStorage)
         editorVM.markDirty()
 
@@ -203,8 +221,10 @@ final class PaginatedTextCoordinator: NSObject, NSTextViewDelegate {
             rect.origin.x += textView.textContainerInset.width
             rect.origin.y += textView.textContainerInset.height
 
-            let windowRect = textView.convert(rect, to: nil)
-            editorVM.updateSelection(hasSelection: true, rect: windowRect)
+            // Convert to the window's content view (flipped, matching SwiftUI .global coords)
+            let targetView = textView.window?.contentView
+            let convertedRect = textView.convert(rect, to: targetView)
+            editorVM.updateSelection(hasSelection: true, rect: convertedRect)
         } else {
             editorVM.updateSelection(hasSelection: false, rect: .zero)
         }
@@ -225,6 +245,7 @@ final class PaginatedTextSystem {
     private var textContainers: [NSTextContainer] = []
     private var textViews: [NSTextView] = []
     private var documentID: UUID?
+    private var document: Document?
     private var contentSize: CGSize = .zero
     private weak var editorVM: EditorViewModel?
     private weak var paginationVM: PaginationViewModel?
@@ -264,6 +285,7 @@ final class PaginatedTextSystem {
     ) {
         self.editorVM = editorVM
         self.paginationVM = paginationVM
+        self.document = document
         coordinator.attach(textSystem: self)
 
         if documentID != document.id {
@@ -280,6 +302,7 @@ final class PaginatedTextSystem {
 
         ensurePages()
         paginationVM.pageCount = max(1, pageCount)
+        updateTextViewDefaults()
         if paginationVM.currentPage > paginationVM.pageCount {
             paginationVM.currentPage = paginationVM.pageCount
         }
@@ -405,18 +428,28 @@ final class PaginatedTextSystem {
         textView.textContainer?.heightTracksTextView = true
         textView.textContainer?.containerSize = contentSize
 
-        textView.font = Typography.editorBodyNS
-        textView.textColor = NSColor.textColor
+        if let document {
+            DocumentFormattingService.configureTextViewDefaults(textView, document: document)
+        } else {
+            textView.font = Typography.editorBodyNS
+            textView.textColor = NSColor.textColor
+            let defaultParagraph = NSMutableParagraphStyle()
+            defaultParagraph.lineSpacing = Typography.editorBodyLeading - Typography.editorBodyNS.pointSize
+            defaultParagraph.paragraphSpacing = 4
+            textView.defaultParagraphStyle = defaultParagraph
+            textView.typingAttributes = [
+                .font: Typography.editorBodyNS,
+                .foregroundColor: NSColor.textColor,
+                .paragraphStyle: defaultParagraph
+            ]
+        }
+    }
 
-        let defaultParagraph = NSMutableParagraphStyle()
-        defaultParagraph.lineSpacing = Typography.editorBodyLeading - Typography.editorBodyNS.pointSize
-        defaultParagraph.paragraphSpacing = 4
-        textView.defaultParagraphStyle = defaultParagraph
-        textView.typingAttributes = [
-            .font: Typography.editorBodyNS,
-            .foregroundColor: NSColor.textColor,
-            .paragraphStyle: defaultParagraph
-        ]
+    private func updateTextViewDefaults() {
+        guard let document else { return }
+        for textView in textViews {
+            DocumentFormattingService.configureTextViewDefaults(textView, document: document)
+        }
     }
 
     private func loadContent(from document: Document) {

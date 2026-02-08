@@ -37,20 +37,8 @@ struct RichTextEditor: NSViewRepresentable {
             height: CGFloat.greatestFiniteMagnitude
         )
 
-        // Default font
-        textView.font = Typography.editorBodyNS
-        textView.textColor = NSColor.textColor
-
-        // Default paragraph style
-        let defaultParagraph = NSMutableParagraphStyle()
-        defaultParagraph.lineSpacing = Typography.editorBodyLeading - Typography.editorBodyNS.pointSize
-        defaultParagraph.paragraphSpacing = 4
-        textView.defaultParagraphStyle = defaultParagraph
-        textView.typingAttributes = [
-            .font: Typography.editorBodyNS,
-            .foregroundColor: NSColor.textColor,
-            .paragraphStyle: defaultParagraph
-        ]
+        // Default font + paragraph style (document-specific)
+        DocumentFormattingService.configureTextViewDefaults(textView, document: document)
 
         // Delegate
         textView.delegate = context.coordinator

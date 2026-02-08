@@ -6,6 +6,8 @@ final class PaginationViewModel {
     var pageCount: Int = 1
     var currentPage: Int = 1
     var pages: [PageInfo] = []
+    /// Set this to trigger an explicit scroll (e.g. from thumbnail clicks). Cleared after scroll.
+    var scrollToPage: Int?
 
     struct PageInfo: Identifiable {
         let id: Int // page number (1-based)

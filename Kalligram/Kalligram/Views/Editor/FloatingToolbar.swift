@@ -1,79 +1,37 @@
 import SwiftUI
 
 struct FloatingToolbar: View {
-    let editorVM: EditorViewModel
-    let formattingVM: FormattingViewModel
     let isVisible: Bool
-    let position: CGPoint
+    var isRewriting: Bool = false
+    var onRewrite: (() -> Void)?
 
     var body: some View {
         if isVisible {
             HStack(spacing: 2) {
-                // Text formatting
-                Group {
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.bold,
-                        isActive: formattingVM.isBold
-                    ) { editorVM.toggleBold() }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.italic,
-                        isActive: formattingVM.isItalic
-                    ) { editorVM.toggleItalic() }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.underline,
-                        isActive: formattingVM.isUnderline
-                    ) { editorVM.toggleUnderline() }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.strikethrough,
-                        isActive: formattingVM.isStrikethrough
-                    ) { editorVM.toggleStrikethrough() }
-                }
-
-                KDivider()
-                    .frame(height: 20)
-                    .padding(.horizontal, 2)
-
-                // Headings
-                Group {
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.heading1,
-                        isActive: formattingVM.currentHeadingLevel == 1
-                    ) { editorVM.applyHeading(level: 1) }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.heading2,
-                        isActive: formattingVM.currentHeadingLevel == 2
-                    ) { editorVM.applyHeading(level: 2) }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.heading3,
-                        isActive: formattingVM.currentHeadingLevel == 3
-                    ) { editorVM.applyHeading(level: 3) }
-                }
-
-                KDivider()
-                    .frame(height: 20)
-                    .padding(.horizontal, 2)
-
-                // Block formatting
-                Group {
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.blockquote,
-                        isActive: false
-                    ) { /* Quote toggle */ }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.bulletList,
-                        isActive: false
-                    ) { /* Bullet list toggle */ }
-
-                    FloatingToolbarButton(
-                        icon: SFSymbolTokens.numberedList,
-                        isActive: false
-                    ) { /* Numbered list toggle */ }
+                if onRewrite != nil {
+                    // AI Rewrite
+                    if isRewriting {
+                        ProgressView()
+                            .controlSize(.small)
+                            .frame(width: Spacing.toolbarButtonSize, height: Spacing.toolbarButtonSize)
+                    } else {
+                        Button {
+                            onRewrite?()
+                        } label: {
+                            HStack(spacing: 3) {
+                                Image(systemName: SFSymbolTokens.rewrite)
+                                    .font(.system(size: 11, weight: .medium))
+                                Text("Rewrite")
+                                    .font(Typography.caption2)
+                            }
+                            .foregroundStyle(ColorPalette.aiAccent)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(ColorPalette.aiAccent.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: Spacing.radiusSmall))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
             .padding(.horizontal, Spacing.floatingToolbarPaddingH)

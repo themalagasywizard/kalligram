@@ -14,6 +14,8 @@ final class UserSettings {
     var showWordCount: Bool
     var showPageCount: Bool
     var typewriterScrolling: Bool
+    var modelPickerModels: String = AIModelCatalog.allModels.joined(separator: ",")
+    var searchModel: String = AIModelCatalog.defaultSearchModel
 
     // MARK: - AI
     var preferredAIProvider: String
@@ -43,6 +45,8 @@ final class UserSettings {
         self.showWordCount = true
         self.showPageCount = true
         self.typewriterScrolling = false
+        self.modelPickerModels = AIModelCatalog.allModels.joined(separator: ",")
+        self.searchModel = AIModelCatalog.defaultSearchModel
         self.preferredAIProvider = "openrouter"
         self.preferredModel = "anthropic/claude-sonnet-4"
         self.defaultAITone = AITone.neutral.rawValue

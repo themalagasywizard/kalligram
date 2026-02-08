@@ -51,6 +51,7 @@ struct KalligramApp: App {
         Settings {
             SettingsWindow()
                 .environment(appState)
+                .modelContainer(modelContainer)
         }
     }
 }
