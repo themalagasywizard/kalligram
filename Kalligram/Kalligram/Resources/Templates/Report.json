@@ -1,0 +1,16 @@
+{
+    "name": "Report",
+    "description": "Professional report with executive summary",
+    "documentType": "report",
+    "icon": "chart.bar.doc.horizontal",
+    "sections": [
+        {"title": "Executive Summary", "level": 1},
+        {"title": "Background", "level": 1},
+        {"title": "Findings", "level": 1},
+        {"title": "Analysis", "level": 1},
+        {"title": "Recommendations", "level": 1},
+        {"title": "Appendix", "level": 1}
+    ],
+    "paperSize": "letter",
+    "lineSpacing": 1.5
+}

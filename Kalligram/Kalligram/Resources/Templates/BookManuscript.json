@@ -1,0 +1,13 @@
+{
+    "name": "Book Manuscript",
+    "description": "Standard manuscript format with chapters",
+    "documentType": "book",
+    "icon": "book",
+    "sections": [
+        {"title": "Chapter 1", "level": 1},
+        {"title": "Chapter 2", "level": 1},
+        {"title": "Chapter 3", "level": 1}
+    ],
+    "paperSize": "letter",
+    "lineSpacing": 2.0
+}

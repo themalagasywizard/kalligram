@@ -1,0 +1,18 @@
+{
+    "name": "Academic Paper",
+    "description": "APA-style paper with abstract, sections, and references",
+    "documentType": "academicPaper",
+    "icon": "doc.text.magnifyingglass",
+    "sections": [
+        {"title": "Abstract", "level": 1},
+        {"title": "Introduction", "level": 1},
+        {"title": "Literature Review", "level": 1},
+        {"title": "Methodology", "level": 1},
+        {"title": "Results", "level": 1},
+        {"title": "Discussion", "level": 1},
+        {"title": "Conclusion", "level": 1},
+        {"title": "References", "level": 1}
+    ],
+    "paperSize": "letter",
+    "lineSpacing": 2.0
+}

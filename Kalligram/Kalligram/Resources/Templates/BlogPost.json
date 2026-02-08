@@ -1,0 +1,13 @@
+{
+    "name": "Blog Post",
+    "description": "Web-ready article with headline and sections",
+    "documentType": "blogPost",
+    "icon": "globe",
+    "sections": [
+        {"title": "Introduction", "level": 1},
+        {"title": "Main Point", "level": 1},
+        {"title": "Conclusion", "level": 1}
+    ],
+    "paperSize": "letter",
+    "lineSpacing": 1.5
+}
