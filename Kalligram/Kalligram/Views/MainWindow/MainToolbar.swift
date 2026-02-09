@@ -5,6 +5,18 @@ struct MainToolbar: ToolbarContent {
     @Environment(AppViewModel.self) private var appViewModel
 
     var body: some ToolbarContent {
+        ToolbarItem(placement: .navigation) {
+            Button {
+                withAnimation(AnimationTokens.standard) {
+                    appState.isSidebarVisible.toggle()
+                }
+            } label: {
+                Image(systemName: SFSymbolTokens.sidebar)
+                    .symbolVariant(appState.isSidebarVisible ? .fill : .none)
+            }
+            .help("Toggle Left Sidebar")
+        }
+
         ToolbarItem(placement: .primaryAction) {
             Button {
                 appState.isNewDocumentSheetPresented = true
@@ -40,14 +52,13 @@ struct MainToolbar: ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Button {
                 withAnimation(AnimationTokens.standard) {
-                    appState.isFocusModeActive.toggle()
+                    appState.isInspectorVisible.toggle()
                 }
             } label: {
-                Image(systemName: SFSymbolTokens.focusMode)
-                    .symbolVariant(appState.isFocusModeActive ? .fill : .none)
+                Image(systemName: SFSymbolTokens.inspector)
+                    .symbolVariant(appState.isInspectorVisible ? .fill : .none)
             }
-            .help("Focus Mode (Cmd+Shift+F)")
-            .keyboardShortcut("f", modifiers: [.command, .shift])
+            .help("Toggle Right Panel")
         }
     }
 }
