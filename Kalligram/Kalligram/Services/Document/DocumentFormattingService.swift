@@ -27,8 +27,10 @@ enum DocumentFormattingService {
         let font = bodyFont(for: document)
         let paragraphStyle = paragraphStyle(for: document, baseFont: font)
 
-        textView.font = font
-        textView.textColor = NSColor.textColor
+        // Only set defaultParagraphStyle and typingAttributes.
+        // Do NOT set textView.font or textView.textColor — those setters
+        // apply to ALL existing text in the textStorage, destroying any
+        // heading or inline formatting.
         textView.defaultParagraphStyle = paragraphStyle
         textView.typingAttributes = [
             .font: font,
@@ -60,7 +62,13 @@ enum DocumentFormattingService {
                 mutableStyle.paragraphSpacingBefore = baseParagraphStyle.paragraphSpacingBefore
                 mutableStyle.paragraphSpacing = baseParagraphStyle.paragraphSpacing
                 mutableStyle.firstLineHeadIndent = baseParagraphStyle.firstLineHeadIndent
-                mutableStyle.alignment = baseParagraphStyle.alignment
+                // Preserve per-paragraph alignment if it was explicitly set
+                // (i.e., differs from the NSParagraphStyle default of .natural).
+                // Only apply the document default when the paragraph has no
+                // explicit alignment override.
+                if existingStyle == nil || existingStyle?.alignment == .natural {
+                    mutableStyle.alignment = baseParagraphStyle.alignment
+                }
                 mutableStyle.hyphenationFactor = baseParagraphStyle.hyphenationFactor
                 mutableStyle.lineBreakMode = baseParagraphStyle.lineBreakMode
                 textStorage.addAttribute(.paragraphStyle, value: mutableStyle, range: range)

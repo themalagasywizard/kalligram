@@ -42,8 +42,10 @@ final class EditorViewModel {
         let text = textStorage.string
         wordCount = text.split(whereSeparator: \.isWhitespace).count
         characterCount = text.count
-        document?.contentPlainText = text
-        document?.updatedAt = Date()
+        // Do NOT update document.contentPlainText or document.updatedAt here.
+        // Those SwiftData model mutations trigger SwiftUI re-renders on every
+        // keystroke, which can cause formatting destruction. Both fields are
+        // already persisted by saveContent().
     }
 
     func updateSelection(hasSelection: Bool, rect: CGRect) {
@@ -119,32 +121,32 @@ final class EditorViewModel {
 
     func toggleBold() {
         textView?.toggleBold()
-        markDirty()
+        notifyFormattingChange()
     }
 
     func toggleItalic() {
         textView?.toggleItalic()
-        markDirty()
+        notifyFormattingChange()
     }
 
     func toggleUnderline() {
         textView?.toggleUnderline()
-        markDirty()
+        notifyFormattingChange()
     }
 
     func toggleStrikethrough() {
         textView?.toggleStrikethrough()
-        markDirty()
+        notifyFormattingChange()
     }
 
     func applyHeading(level: Int) {
         textView?.applyHeadingStyle(level: level)
-        markDirty()
+        notifyFormattingChange()
     }
 
     func setFontSize(_ size: CGFloat) {
         textView?.applyFontSize(size)
-        markDirty()
+        notifyFormattingChange()
     }
 
     func increaseFontSize() {
@@ -161,22 +163,30 @@ final class EditorViewModel {
 
     func alignLeft() {
         textView?.alignLeft(nil)
-        markDirty()
+        notifyFormattingChange()
     }
 
     func alignCenter() {
         textView?.alignCenter(nil)
-        markDirty()
+        notifyFormattingChange()
     }
 
     func alignRight() {
         textView?.alignRight(nil)
-        markDirty()
+        notifyFormattingChange()
     }
 
     func alignJustified() {
         textView?.alignJustified(nil)
+        notifyFormattingChange()
+    }
+
+    private func notifyFormattingChange() {
+        guard let textView else { return }
         markDirty()
+        // Save immediately so formatting changes are persisted to RTF data
+        // right away, rather than waiting for the 2-second debounce.
+        saveContent(from: textView)
     }
 
     // MARK: - Inline Rewrite Actions
